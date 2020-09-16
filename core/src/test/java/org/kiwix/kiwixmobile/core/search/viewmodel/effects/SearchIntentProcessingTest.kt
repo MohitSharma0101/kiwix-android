@@ -18,7 +18,7 @@
 
 package org.kiwix.kiwixmobile.core.search.viewmodel.effects
 
-import android.os.Bundle
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import io.mockk.Called
 import io.mockk.clearAllMocks
@@ -29,15 +29,15 @@ import io.mockk.verifySequence
 import io.reactivex.processors.PublishProcessor
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.kiwix.kiwixmobile.core.search.NAV_ARG_SEARCH_STRING
 import org.kiwix.kiwixmobile.core.search.viewmodel.Action
 import org.kiwix.kiwixmobile.core.search.viewmodel.Action.Filter
 import org.kiwix.kiwixmobile.core.search.viewmodel.Action.ReceivedPromptForSpeechInput
 import org.kiwix.kiwixmobile.core.search.viewmodel.Action.ScreenWasStartedFrom
 import org.kiwix.kiwixmobile.core.search.viewmodel.SearchOrigin.FromTabView
 import org.kiwix.kiwixmobile.core.search.viewmodel.SearchOrigin.FromWebView
-import org.kiwix.kiwixmobile.core.utils.EXTRA_IS_WIDGET_VOICE
 import org.kiwix.kiwixmobile.core.utils.TAG_FROM_TAB_SWITCHER
+import org.kiwix.kiwixmobile.core.utils.EXTRA_SEARCH
+import org.kiwix.kiwixmobile.core.utils.EXTRA_IS_WIDGET_VOICE
 
 internal class SearchIntentProcessingTest {
 
@@ -45,7 +45,7 @@ internal class SearchIntentProcessingTest {
 
   private val activity: AppCompatActivity = mockk()
 
-  private val bundle: Bundle? = mockk(relaxed = true)
+  private val intent: Intent = mockk(relaxed = true)
 
   @BeforeEach
   fun init() {
@@ -54,15 +54,16 @@ internal class SearchIntentProcessingTest {
 
   @Test
   fun `invoke with does nothing with null data`() {
-    SearchArgumentProcessing(null, actions).invokeWith(activity)
+    SearchIntentProcessing(null, actions).invokeWith(activity)
     verify { actions wasNot Called }
   }
 
   @Test
   fun `invoke with offers action when EXTRA_PROCESS_TEXT present`() {
     val extra = ""
-    every { bundle?.getString(NAV_ARG_SEARCH_STRING) } returns extra
-    SearchArgumentProcessing(bundle, actions).invokeWith(activity)
+    every { intent.hasExtra(Intent.EXTRA_PROCESS_TEXT) } returns true
+    every { intent.getStringExtra(Intent.EXTRA_PROCESS_TEXT) } returns extra
+    SearchIntentProcessing(intent, actions).invokeWith(activity)
     verifySequence {
       actions.offer(any<ScreenWasStartedFrom>())
       actions.offer(Filter(extra))
@@ -72,8 +73,9 @@ internal class SearchIntentProcessingTest {
   @Test
   fun `invoke with offers action when EXTRA_SEARCH present`() {
     val extra = ""
-    every { bundle?.getString(NAV_ARG_SEARCH_STRING) } returns extra
-    SearchArgumentProcessing(bundle, actions).invokeWith(activity)
+    every { intent.hasExtra(EXTRA_SEARCH) } returns true
+    every { intent.getStringExtra(EXTRA_SEARCH) } returns extra
+    SearchIntentProcessing(intent, actions).invokeWith(activity)
     verifySequence {
       actions.offer(any<ScreenWasStartedFrom>())
       actions.offer(Filter(extra))
@@ -82,9 +84,9 @@ internal class SearchIntentProcessingTest {
 
   @Test
   fun `invoke with offers action when EXTRA_IS_WIDGET_VOICE present`() {
-    every { bundle?.getBoolean(EXTRA_IS_WIDGET_VOICE, false) } returns true
-    SearchArgumentProcessing(bundle, actions).invokeWith(activity)
-    verify {
+    every { intent.getBooleanExtra(EXTRA_IS_WIDGET_VOICE, false) } returns true
+    SearchIntentProcessing(intent, actions).invokeWith(activity)
+    verifySequence {
       actions.offer(any<ScreenWasStartedFrom>())
       actions.offer(ReceivedPromptForSpeechInput)
     }
@@ -92,18 +94,18 @@ internal class SearchIntentProcessingTest {
 
   @Test
   fun `invoke with offers action when TAG_FROM_TAB_SWITCHER present`() {
-    every { bundle?.getBoolean(TAG_FROM_TAB_SWITCHER, false) } returns true
-    SearchArgumentProcessing(bundle, actions).invokeWith(activity)
-    verify {
+    every { intent.getBooleanExtra(TAG_FROM_TAB_SWITCHER, false) } returns true
+    SearchIntentProcessing(intent, actions).invokeWith(activity)
+    verifySequence {
       actions.offer(ScreenWasStartedFrom(FromTabView))
     }
   }
 
   @Test
   fun `invoke with offers action when TAG_FROM_TAB_SWITCHER not present`() {
-    every { bundle?.getBoolean(TAG_FROM_TAB_SWITCHER, false) } returns false
-    SearchArgumentProcessing(bundle, actions).invokeWith(activity)
-    verify {
+    every { intent.getBooleanExtra(TAG_FROM_TAB_SWITCHER, false) } returns false
+    SearchIntentProcessing(intent, actions).invokeWith(activity)
+    verifySequence {
       actions.offer(ScreenWasStartedFrom(FromWebView))
     }
   }

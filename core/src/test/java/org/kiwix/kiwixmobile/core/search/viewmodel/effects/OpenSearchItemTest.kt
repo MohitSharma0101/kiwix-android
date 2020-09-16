@@ -18,15 +18,14 @@
 
 package org.kiwix.kiwixmobile.core.search.viewmodel.effects
 
+import android.app.Activity
 import android.content.Intent
+import androidx.appcompat.app.AppCompatActivity
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.verify
 import org.junit.jupiter.api.Test
-import org.kiwix.kiwixmobile.core.extensions.ActivityExtensions.popNavigationBackstack
-import org.kiwix.kiwixmobile.core.extensions.ActivityExtensions.setNavigationResult
-import org.kiwix.kiwixmobile.core.main.CoreMainActivity
 import org.kiwix.kiwixmobile.core.search.adapter.SearchListItem.RecentSearchListItem
 import org.kiwix.kiwixmobile.core.utils.TAG_FILE_SEARCHED
 import org.kiwix.kiwixmobile.core.utils.TAG_FILE_SEARCHED_NEW_TAB
@@ -36,7 +35,7 @@ internal class OpenSearchItemTest {
   @Test
   fun `invoke with returns an Ok Result with list item value`() {
     val searchListItem = RecentSearchListItem("")
-    val activity: CoreMainActivity = mockk(relaxed = true)
+    val activity: AppCompatActivity = mockk()
     mockkConstructor(Intent::class)
     val intent = mockk<Intent>()
     every {
@@ -45,18 +44,15 @@ internal class OpenSearchItemTest {
     } returns intent
     OpenSearchItem(searchListItem, false).invokeWith(activity)
     verify {
-      activity.setNavigationResult(
-        SearchItemToOpen(searchListItem.value, false),
-        TAG_FILE_SEARCHED
-      )
-      activity.popNavigationBackstack()
+      activity.setResult(Activity.RESULT_OK, intent)
+      activity.finish()
     }
   }
 
   @Test
   fun `invoke with returns an Ok Result with list item value for new tab`() {
     val searchListItem = RecentSearchListItem("")
-    val activity: CoreMainActivity = mockk(relaxed = true)
+    val activity: AppCompatActivity = mockk()
     mockkConstructor(Intent::class)
     val intent = mockk<Intent>()
     every {
@@ -65,11 +61,8 @@ internal class OpenSearchItemTest {
     } returns intent
     OpenSearchItem(searchListItem, true).invokeWith(activity)
     verify {
-      activity.setNavigationResult(
-        SearchItemToOpen(searchListItem.value, true),
-        TAG_FILE_SEARCHED
-      )
-      activity.popNavigationBackstack()
+      activity.setResult(Activity.RESULT_OK, intent)
+      activity.finish()
     }
   }
 }

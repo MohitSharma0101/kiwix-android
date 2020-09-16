@@ -30,6 +30,8 @@ class IntroFragmentTest : BaseActivityTest<KiwixMainActivity>() {
   @Test
   fun viewIsSwipeableAndNavigatesToMain() {
     runOnUiThread { activityRule.activity.navigate(R.id.introFragment) }
-    intro(IntroRobot::swipeLeft) clickGetStarted { }
+    intro {
+      swipeLeft()
+    } clickGetStarted { }
   }
 }
